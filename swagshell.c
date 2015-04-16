@@ -10,14 +10,12 @@ int main() {
 	char checkenv_string [MAX_LENGTH] = COMMAND_CHECKENV;
 
 	char cmd [MAX_LENGTH];
+
 	while(1) {
 		printf("swag > ");
 
 		if(fgets(cmd, sizeof(cmd), stdin) == NULL) break;
 		printf("%s", &cmd[0]);
-
-
-
 
 
 if(strcmp(cmd,cd_string)==0){
@@ -29,11 +27,6 @@ if(strcmp(cmd,cd_string)==0){
 }else {
 	printf("%s is UNKNOWN\n", &cmd[0]);
 }
-
-
-
-
-		
 
 	}
 	return EXIT_SUCCESS;
