@@ -20,10 +20,21 @@ int main() {
 	return EXIT_SUCCESS;
 }
 
+/* Call built-in chdir subroutine */
 int changeDir(const char *dir) {
-	return chdir(dir);
+	char cwd[1024];
+	int status;
+	printf("%s", dir);
+	getcwd(cwd, sizeof(cwd));
+	printf("Current working directory: %s\n", &cwd[0]);
+	status = chdir(dir);
+	printf("%d", status);
+	getcwd(cwd, sizeof(cwd));
+	printf("Current working directory: %s\n", &cwd[0]);
+	return status;
 }
 
+/* Parse input and trim newlines */
 void parseCmd(char *cmd, char **params) {
 	int i = 0;
 	char * comm;
@@ -35,19 +46,23 @@ void parseCmd(char *cmd, char **params) {
 	}
 }
 
-void executeCmd(const char *params){
+int executeCmd(const char *params){
 	/*
 	char cd_string [MAX_LENGTH] = COMMAND_CD;
 	char exit_string [MAX_LENGTH] = COMMAND_EXIT;
 	char checkenv_string [MAX_LENGTH] = COMMAND_CHECKENV;*/
 	if(strcmp(&params[0], COMMAND_CD)==0){
-		printf("%s is CD\n", &params[0]);
+		/*printf("%s is CD\n", &params[0]);*/
+		return changeDir(&params[1]);
 	}else if(strcmp(&params[0], COMMAND_EXIT)==0){
 		printf("%s is EXIT\n", &params[0]);
+		return EXIT_SUCCESS;
 	}else if(strcmp(&params[0], COMMAND_CHECKENV)==0){
 		printf("%s is CHECKENV\n", &params[0]);
+		return EXIT_SUCCESS;
 	}else {
-		printf("%s is UNKNOWN\n", &params[0]);
+		printf("Unkown command: %s\n", &params[0]);
+		return EXIT_FAILURE;
 	}
 }
 

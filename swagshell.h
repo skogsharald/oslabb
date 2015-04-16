@@ -5,8 +5,8 @@
 #include <string.h>
 
 /* Declaration of the changeDir function */
-int changeDir(const char*);
+int changeDir(const char *);
 
-void parseCmd(char*, char **paramList);
+void parseCmd(char*, char **);
 
-void executeCmd(const char *params);
+int executeCmd(const char *);
