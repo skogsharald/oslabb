@@ -13,8 +13,8 @@ int main() {
 	while(1) {
 		printf("swag > ");
 
-		scanf("%[^\n]%*c", cmd);
-		if(&cmd[0] == NULL) break;
+		if(fgets(cmd, sizeof(cmd), stdin) == NULL) break;
+		printf("%s", &cmd[0]);
 
 
 
@@ -34,6 +34,7 @@ if(strcmp(cmd,cd_string)==0){
 
 
 		
+
 	}
 	return EXIT_SUCCESS;
 }
