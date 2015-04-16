@@ -27,11 +27,11 @@ int changeDir(const char *dir) {
 void parseCmd(char *cmd, char **params) {
 	int i = 0;
 	char * comm;
-	comm = strtok(cmd, " ");
+	comm = strtok(cmd, " \n");
 	while(comm != NULL) {
 		params[i] = comm;
 		i++;
-		comm = strtok(NULL, " ");
+		comm = strtok(NULL, " \n");
 	}
 }
 
