@@ -6,3 +6,7 @@
 
 /* Declaration of the changeDir function */
 int changeDir(const char*);
+
+void parseCmd(char*, char **paramList);
+
+void executeCmd(const char *params);
