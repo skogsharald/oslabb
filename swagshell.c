@@ -44,13 +44,10 @@ void parseCmd(char *cmd, char **params) {
 	}
 }
 
-int executeBuiltIn(const char **params) {
+int executeBuiltIn(char **params) {
 	/*printf("%s", params[0]);*/
 	int res;
 	res = execvp(params[0], params);
-	if(res == NULL) {
-		res = 1;
-	}
 	return res;
 }
 

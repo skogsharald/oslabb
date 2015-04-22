@@ -11,4 +11,4 @@ void parseCmd(char*, char **);
 
 int executeCmd(const char *);
 
-int executeBuiltIn(const char **);
+int executeBuiltIn(char **);
