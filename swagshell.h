@@ -10,3 +10,5 @@ int changeDir(const char *);
 void parseCmd(char*, char **);
 
 int executeCmd(const char *);
+
+int executeBuiltIn(char);
