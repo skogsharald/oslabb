@@ -8,12 +8,13 @@ int main() {
 
 	char cmd [MAX_LENGTH];
 	char *params [MAX_PARAMETERS];
+	int argc;
 	while(1) {
 		printf("swag > ");
 
 		if(fgets(cmd, sizeof(cmd), stdin) == NULL) break;
-		parseCmd(cmd, params);
-		executeCmd(*params);
+		argc = parseCmd(cmd, params);
+		executeCmd(params, argc);
 	}
 	return EXIT_SUCCESS;
 }
@@ -38,7 +39,7 @@ int changeDir(char *dir) {
 }
 
 /* Parse input and trim newlines */
-void parseCmd(char *cmd, char **params) {
+int parseCmd(char *cmd, char **params) {
 	int i = 0;
 	char * comm;
 	comm = strtok(cmd, " \n");
@@ -47,6 +48,7 @@ void parseCmd(char *cmd, char **params) {
 		i++;
 		comm = strtok(NULL, " \n");
 	}
+	return i;
 }
 
 int executeBuiltIn(char **params) {
@@ -56,27 +58,32 @@ int executeBuiltIn(char **params) {
 	return res;
 }
 
-int executeCmd(char *params){
+int executeCmd(char **params, int argc){
 	int res;
 	char *msg;
 	/*
 	char cd_string [MAX_LENGTH] = COMMAND_CD;
 	char exit_string [MAX_LENGTH] = COMMAND_EXIT;
 	char checkenv_string [MAX_LENGTH] = COMMAND_CHECKENV;*/
-	if(strcmp(&params[0], COMMAND_CD)==0){
+	if(strcmp(params[0], COMMAND_CD)==0){
 		/*printf("%s is CD\n", &params[0]);*/
-		res = changeDir(&params[1]);
+		if (argc == 1)
+			res = changeDir(getenv("HOME"));
+		else if (argc == 2)
+			res =  changeDir(params[1]);
+		else
+			res =  EXIT_FAILURE;
 		if(res < 1) {
 			msg = "Error";
 		}
-	}else if(strcmp(&params[0], COMMAND_EXIT)==0){
-		printf("%s is EXIT\n", &params[0]);
+	}else if(strcmp(params[0], COMMAND_EXIT)==0){
+		printf("%s is EXIT\n", params[0]);
 		res =  EXIT_SUCCESS;
-	}else if(strcmp(&params[0], COMMAND_CHECKENV)==0){
-		printf("%s is CHECKENV\n", &params[0]);
+	}else if(strcmp(params[0], COMMAND_CHECKENV)==0){
+		printf("%s is CHECKENV\n", params[0]);
 		res =  EXIT_SUCCESS;
 	}else {
-		res = executeBuiltIn(&params);
+		res = executeBuiltIn(params);
 		if(res < 0){
 			msg = "Unknown command";
 			/*printf("Unkown command: %s\n", &params[0]);*/

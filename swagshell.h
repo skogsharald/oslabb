@@ -7,8 +7,8 @@
 /* Declaration of the changeDir function */
 int changeDir(char *);
 
-void parseCmd(char*, char **);
+int parseCmd(char*, char **);
 
-int executeCmd(char *);
+int executeCmd(char **, int);
 
 int executeBuiltIn(char **);
