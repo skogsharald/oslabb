@@ -44,8 +44,10 @@ void parseCmd(char *cmd, char **params) {
 	}
 }
 
-int executeBuiltIn(char params) {
-	int res = execvp(params[0], params);
+int executeBuiltIn(const char **params) {
+	/*printf("%s", params[0]);*/
+	int res;
+	res = execvp(params[0], params);
 	if(res == NULL) {
 		res = 1;
 	}
@@ -72,10 +74,10 @@ int executeCmd(const char *params){
 		printf("%s is CHECKENV\n", &params[0]);
 		res =  EXIT_SUCCESS;
 	}else {
-		res = executeBuiltIn(params);
+		res = executeBuiltIn(&params);
 		if(res < 0){
 			msg = "Unknown command";
-			//printf("Unkown command: %s\n", &params[0]);
+			/*printf("Unkown command: %s\n", &params[0]);*/
 		}
 	}
 	if(res < 0) {
