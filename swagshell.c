@@ -24,7 +24,6 @@ int changeDir(char *dir) {
 	char cwd[1024];
 	char *swag;
 	int status;
-	printf("%s", dir);
 	swag = getcwd(cwd, sizeof(cwd));
 	printf("Current working directory: %s\n", &cwd[0]);
 	status = chdir(dir);
@@ -48,13 +47,29 @@ int parseCmd(char *cmd, char **params) {
 		i++;
 		comm = strtok(NULL, " \n");
 	}
+	params[i] = NULL;
 	return i;
 }
 
 int executeBuiltIn(char **params) {
 	/*printf("%s", params[0]);*/
 	int res;
-	res = execvp(params[0], params);
+	pid_t pid;
+	pid = fork();
+	if(pid < 0){
+		perror("Fuck all");
+		res = EXIT_FAILURE;
+	} else if(pid == 0) {
+		res = execvp(params[0], params);
+	} else {
+		wait(NULL);
+		res = EXIT_SUCCESS;
+	}
+
+	if(res < 0)
+	{
+		perror("Error when calling execvp: ");
+	}
 	return res;
 }
 

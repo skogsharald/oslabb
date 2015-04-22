@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 /* Declaration of the changeDir function */
 int changeDir(char *);
