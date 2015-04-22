@@ -5,10 +5,10 @@
 #include <string.h>
 
 /* Declaration of the changeDir function */
-int changeDir(const char *);
+int changeDir(char *);
 
 void parseCmd(char*, char **);
 
-int executeCmd(const char *);
+int executeCmd(char *);
 
 int executeBuiltIn(char **);

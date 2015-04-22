@@ -19,16 +19,21 @@ int main() {
 }
 
 /* Call built-in chdir subroutine */
-int changeDir(const char *dir) {
+int changeDir(char *dir) {
 	char cwd[1024];
+	char *swag;
 	int status;
 	printf("%s", dir);
-	getcwd(cwd, sizeof(cwd));
+	swag = getcwd(cwd, sizeof(cwd));
 	printf("Current working directory: %s\n", &cwd[0]);
 	status = chdir(dir);
-	printf("%d", status);
-	getcwd(cwd, sizeof(cwd));
+	/*printf("%d", status);*/
+	swag = getcwd(cwd, sizeof(cwd));
 	printf("Current working directory: %s\n", &cwd[0]);
+	if(swag == NULL) {
+		printf("wat");
+		status = -1;
+	}
 	return status;
 }
 
@@ -51,9 +56,9 @@ int executeBuiltIn(char **params) {
 	return res;
 }
 
-int executeCmd(const char *params){
+int executeCmd(char *params){
 	int res;
-	char msg;
+	char *msg;
 	/*
 	char cd_string [MAX_LENGTH] = COMMAND_CD;
 	char exit_string [MAX_LENGTH] = COMMAND_EXIT;
@@ -62,7 +67,7 @@ int executeCmd(const char *params){
 		/*printf("%s is CD\n", &params[0]);*/
 		res = changeDir(&params[1]);
 		if(res < 1) {
-			msg = "Not a directory.";
+			msg = "Error";
 		}
 	}else if(strcmp(&params[0], COMMAND_EXIT)==0){
 		printf("%s is EXIT\n", &params[0]);
