@@ -87,10 +87,10 @@ int checkEnv(char **params){
 	cmd[0] = printenv;
 	cmd[1] = grep;
 	cmd[2] = pager;
-	return loop_pipe(cmd);
+	return my_pipe(cmd);
 }
 
-int loop_pipe(char ***cmd) {
+int my_pipe(char ***cmd) {
 	int saved_in;
 	int saved_out;
 	int   p[2];
@@ -126,7 +126,7 @@ int loop_pipe(char ***cmd) {
 			close(p[0]); /* Close file descriptor for read end of pipe */
 			execvp((*cmd)[0], *cmd); /*Execute command*/
 			if(*(cmd + 1) == NULL) {
-				/* If we end up here, it means less (or the pager set) has failed and thus we run more instead */
+				/* If we end up here, it means less (or the pager set) has failed and thus we run more instead*/
 				execvp(more[0], more);
 			}
 			exit(EXIT_FAILURE); /* Fuck all */

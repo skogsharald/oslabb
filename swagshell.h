@@ -18,4 +18,4 @@ int executeBuiltIn(char **);
 
 int checkEnv(char **);
 
-int loop_pipe(char ***);
+int my_pipe(char ***);
