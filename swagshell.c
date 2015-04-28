@@ -74,11 +74,59 @@ int executeBuiltIn(char **params) {
 }
 
 int checkEnv(char **params){
+
+
+	char *ls[] = {"printenv", NULL};
+  	char *grep[] = {"sort", NULL};
+  	char *wc[] = {NULL};
+  	char **cmd[] = {ls, grep, wc, NULL};
+
+  
+  loop_pipe(cmd);
+  return 0;
+}
+
+void    loop_pipe(char ***cmd) {
+	int   p[2];
+  pid_t pid;
+  int   fd_in = 0;
+
+  while (*cmd != NULL)
+    {
+
+      printf("Command in loop was: %s", *cmd);
+      pipe(p);
+      if ((pid = fork()) == -1)
+        {
+          exit(EXIT_FAILURE);
+        }
+      else if (pid == 0) /* Child process */
+      {
+          dup2(fd_in, 0); /* First iteration, make sure we read from STDIN, otherwise read from whatever specified by fd_in */
+          if (*(cmd + 1) != NULL)
+            dup2(p[1], 1); /* If the next command in chain is not null, make sure we write to pipe write file descriptor */
+          close(p[0]); /* Close file descriptor for read end of pipe */
+          execvp((*cmd)[0], *cmd); /*Execute command*/
+          exit(EXIT_FAILURE); /* Fuck all */
+        }
+      else
+        {
+          wait(NULL); /* Wait for child process */
+          close(p[1]); /* Close the write end of pipe */
+          fd_in = p[0]; /* Set fd_in to read end of pipe, so we in next iteration read from this file descriptor*/
+          cmd++; /* Next command in chain */ 
+        }
+    }
+  }
+
+
+/*
 	int res;
 	int fds[2];
 	pipe(fds);
 
-	/*res = execlp("printenv", "printenv", NULL);*/
+	//res = execlp("printenv", "printenv", NULL);
+	
 	pipe(fds);
 	pid_t pid = fork();
 
@@ -87,7 +135,7 @@ int checkEnv(char **params){
 		close(fds[1]);
 		dup2(fds[0], STDIN_FILENO);
 		
-/*
+
 		wait(pid);
 		printf("WAIT COMPLETE");
 		pid_t pid2 = fork();
@@ -110,7 +158,7 @@ int checkEnv(char **params){
 	}
 */
 
-
+/*
 	}else if(pid > 0){
 		close(fds[0]);
 		printf("child pid is: %i", pid);
@@ -125,10 +173,11 @@ int checkEnv(char **params){
 		execvp("sort", NULL);
 		
 	}
+	*/
 
 
 
-}
+
 
 int executeCmd(char **params, int argc){
 	int res;
