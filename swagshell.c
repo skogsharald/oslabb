@@ -72,7 +72,7 @@ int checkEnv(char **params, int argc){
 
 
 	char *printenv[2];
-	char *grep[100];
+	char *grep[10];
 	char *sort[2];
 	char *pager[2];
 	char **cmd[5];
@@ -85,12 +85,15 @@ int checkEnv(char **params, int argc){
 	} else {
 		pager[0] = pager_env;
 	}
+	pager[1] = NULL;
 	sort[0] = "sort";
+	sort[1] = NULL;
 	cmd[0] = printenv;
 	if(argc > 0){
 		grep[0] = "grep";
 		for(i = 1; i <= argc; i++ ){
 			grep[i] = params[i];
+			grep[(i+1)] = NULL;
 		}
 		cmd[1] = grep;
 		cmd[2] = sort;
@@ -99,7 +102,9 @@ int checkEnv(char **params, int argc){
 		
 		cmd[1] = sort;
 		cmd[2] = pager;
+		cmd[3] = NULL;
 	}
+	cmd[4] = NULL;
 	
 	
 	return my_pipe(cmd);
