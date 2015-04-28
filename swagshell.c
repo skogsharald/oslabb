@@ -84,17 +84,18 @@ int checkEnv(char **params){
 
 	if(pid==0){
 		printf("parent pid is: %i", pid);
-		close(fd[1]);
+		close(fds[1]);
 		dup2(fds[0], STDIN_FILENO);
-		//LÄS FRÅN FIL
+		
+/*
 		wait(pid);
-
+		printf("WAIT COMPLETE");
 		pid_t pid2 = fork();
 		int fds2[2];
 
 		if(pid==0){
 			printf("parent pid is: %i", pid);
-			close(fd2[1]);
+			close(fds2[1]);
 			dup2(fds2[0], STDIN_FILENO);  
 		}else if(pid > 0){
 			close(fds2[0]);
@@ -102,13 +103,12 @@ int checkEnv(char **params){
 			dup2(fds2[1], STDOUT_FILENO);
 			execlp("printenv", NULL);
 			close(fds2[1]);
-			//SKRIV TILL FIL
+			
 		}else{
 			printf("didn't work... pid is: %i", pid);
-			execvp("sort");
-		
+			execvp("sort", NULL);
 	}
-
+*/
 
 
 	}else if(pid > 0){
@@ -117,12 +117,12 @@ int checkEnv(char **params){
 		dup2(fds[1], STDOUT_FILENO);
 		execlp("printenv", NULL);
 		close(fds[1]);
-		//SKRIV TILL FIL
+		
 
 	}else{
 		
 		printf("didn't work... pid is: %i", pid);
-		execvp("sort");
+		execvp("sort", NULL);
 		
 	}
 
