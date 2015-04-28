@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <termios.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -14,7 +15,7 @@ int parseCmd(char*, char **);
 
 int executeCmd(char **, int);
 
-int executeBuiltIn(char **);
+int executeBuiltIn(char **, int);
 
 int checkEnv(char **, int);
 

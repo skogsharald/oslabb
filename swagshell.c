@@ -20,8 +20,14 @@ int main() {
 }
 
 void intHandler(){
-	signal(SIGINT, intHandler);
-	printf("\nswag > ");
+	/*fprintf(stderr, "\nswag > ");*/
+	int e;
+	e = tcflush(STDIN_FILENO, TCIFLUSH);
+	if(e < 0){
+		perror("Error flushing stdin");
+	}
+	fprintf(stdout, "\n");
+	fprintf(stdout, "swag > ");
 	fflush(stdout);
 }
 
@@ -57,10 +63,18 @@ int parseCmd(char *cmd, char **params) {
 	return i;
 }
 
-int executeBuiltIn(char **params) {
+int executeBuiltIn(char **params, int argc) {
 	/*printf("%s", params[0]);*/
 	int res;
 	pid_t pid;
+	int background;
+	int i;
+	background = 0;
+	for(i = 0; i < argc; i++){
+		if(strcmp(params[i], "&") == 0){
+			background = 1;
+		}
+	}
 	pid = fork();
 	if(pid < 0){
 		perror("Fork failed");
@@ -68,7 +82,8 @@ int executeBuiltIn(char **params) {
 	} else if(pid == 0) {
 		res = execvp(params[0], params);
 	} else {
-		wait(NULL);
+		if(background == 0)
+			wait(NULL);
 		res = EXIT_SUCCESS;
 	}
 	return res;
@@ -205,7 +220,7 @@ int executeCmd(char **params, int argc){
 			msg = "checkEnv failed";
 		}
 	}else {
-		res = executeBuiltIn(params);
+		res = executeBuiltIn(params, argc);
 		if(res < 0){
 			msg = "Unknown command";
 			/*printf("Unkown command: %s\n", &params[0]);*/
