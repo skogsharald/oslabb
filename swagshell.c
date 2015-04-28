@@ -79,7 +79,7 @@ int checkEnv(char **params){
 	pager_env = getenv("PAGER");
 	printenv[0] = "printenv";
 	if(pager_env == NULL) {
-		pager[0] = "lessp";
+		pager[0] = "less";
 	} else {
 		pager[0] = pager_env;
 	}
