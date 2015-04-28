@@ -79,7 +79,7 @@ int checkEnv(char **params){
 	pager_env = getenv("PAGER");
 	printenv[0] = "printenv";
 	if(pager_env == NULL) {
-		pager[0] = "less";
+		pager[0] = "lessp";
 	} else {
 		pager[0] = pager_env;
 	}
@@ -100,7 +100,9 @@ int loop_pipe(char ***cmd) {
 	char *more[2];
 
 	fd_in = 0;
+	/* Hard-code and introduce more as an alternative to less */
 	more[0] = "more";
+	more[1] = NULL;
 	/* Save STDIN and STDOUT */
 	saved_in = dup(0);
 	saved_out = dup(1);
@@ -124,6 +126,7 @@ int loop_pipe(char ***cmd) {
 			close(p[0]); /* Close file descriptor for read end of pipe */
 			execvp((*cmd)[0], *cmd); /*Execute command*/
 			if(*(cmd + 1) == NULL) {
+				/* If we end up here, it means less (or the pager set) has failed and thus we run more instead */
 				execvp(more[0], more);
 			}
 			exit(EXIT_FAILURE); /* Fuck all */
@@ -210,6 +213,9 @@ int loop_pipe(char ***cmd) {
 	char cd_string [MAX_LENGTH] = COMMAND_CD;
 	char exit_string [MAX_LENGTH] = COMMAND_EXIT;
 	char checkenv_string [MAX_LENGTH] = COMMAND_CHECKENV;*/
+	if(argc < 1){
+		return EXIT_SUCCESS;
+	}
 	if(strcmp(params[0], COMMAND_CD)==0){
 		/*printf("%s is CD\n", &params[0]);*/
 		if (argc == 1)
