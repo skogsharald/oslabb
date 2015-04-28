@@ -17,4 +17,4 @@ int executeBuiltIn(char **);
 
 int checkEnv(char **);
 
-void loop_pipe(char ***);
+int loop_pipe(char ***);

@@ -57,7 +57,7 @@ int executeBuiltIn(char **params) {
 	pid_t pid;
 	pid = fork();
 	if(pid < 0){
-		perror("Fuck all");
+		perror("Fork failed");
 		res = EXIT_FAILURE;
 	} else if(pid == 0) {
 		res = execvp(params[0], params);
@@ -65,40 +65,50 @@ int executeBuiltIn(char **params) {
 		wait(NULL);
 		res = EXIT_SUCCESS;
 	}
-
-	if(res < 0)
-	{
-		perror("Error when calling execvp: ");
-	}
 	return res;
 }
 
 int checkEnv(char **params){
 
 
-	char *ls[] = {"printenv", NULL};
-  	char *grep[] = {"sort", NULL};
-  	char *wc[] = {NULL};
-  	char **cmd[] = {ls, grep, wc, NULL};
+	char *printenv[2];
+  	char *grep[2];
+  	char *pager[2];
+  	char **cmd[4];
+  	printenv[0] = "printenv";
+  	grep[0] = "sort";
+  	pager[0] = "less";
+  	cmd[0] = printenv;
+  	cmd[1] = grep;
+  	cmd[2] = pager;
+
+
 
   
-  loop_pipe(cmd);
-  return 0;
+  return loop_pipe(cmd);
 }
 
-void    loop_pipe(char ***cmd) {
+int    loop_pipe(char ***cmd) {
+	int saved_in;
+	int saved_out;
 	int   p[2];
   pid_t pid;
-  int   fd_in = 0;
+  int   fd_in;
+  int pipe_res;
+
+  fd_in = 0;
+  saved_in = dup(0);
+  saved_out = dup(1);
 
   while (*cmd != NULL)
     {
 
-      printf("Command in loop was: %s", *cmd);
-      pipe(p);
+      pipe_res = pipe(p);
+      if(pipe_res < 0)
+      	return EXIT_FAILURE;
       if ((pid = fork()) == -1)
         {
-          exit(EXIT_FAILURE);
+          return EXIT_FAILURE;
         }
       else if (pid == 0) /* Child process */
       {
@@ -117,6 +127,9 @@ void    loop_pipe(char ***cmd) {
           cmd++; /* Next command in chain */ 
         }
     }
+    dup2(saved_in, 0);
+    dup2(saved_out, 1);
+    return EXIT_SUCCESS;
   }
 
 
