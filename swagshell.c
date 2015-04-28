@@ -73,6 +73,63 @@ int executeBuiltIn(char **params) {
 	return res;
 }
 
+int checkEnv(char **params){
+	int res;
+	int fds[2];
+	pipe(fds);
+
+	/*res = execlp("printenv", "printenv", NULL);*/
+	pipe(fds);
+	pid_t pid = fork();
+
+	if(pid==0){
+		printf("parent pid is: %i", pid);
+		close(fd[1]);
+		dup2(fds[0], STDIN_FILENO);
+		//LÄS FRÅN FIL
+		wait(pid);
+
+		pid_t pid2 = fork();
+		int fds2[2];
+
+		if(pid==0){
+			printf("parent pid is: %i", pid);
+			close(fd2[1]);
+			dup2(fds2[0], STDIN_FILENO);  
+		}else if(pid > 0){
+			close(fds2[0]);
+			printf("child2 pid is: %i", pid);
+			dup2(fds2[1], STDOUT_FILENO);
+			execlp("printenv", NULL);
+			close(fds2[1]);
+			//SKRIV TILL FIL
+		}else{
+			printf("didn't work... pid is: %i", pid);
+			execvp("sort");
+		
+	}
+
+
+
+	}else if(pid > 0){
+		close(fds[0]);
+		printf("child pid is: %i", pid);
+		dup2(fds[1], STDOUT_FILENO);
+		execlp("printenv", NULL);
+		close(fds[1]);
+		//SKRIV TILL FIL
+
+	}else{
+		
+		printf("didn't work... pid is: %i", pid);
+		execvp("sort");
+		
+	}
+
+
+
+}
+
 int executeCmd(char **params, int argc){
 	int res;
 	char *msg;
@@ -95,8 +152,7 @@ int executeCmd(char **params, int argc){
 		printf("%s is EXIT\n", params[0]);
 		res =  EXIT_SUCCESS;
 	}else if(strcmp(params[0], COMMAND_CHECKENV)==0){
-		printf("%s is CHECKENV\n", params[0]);
-		res =  EXIT_SUCCESS;
+		res = checkEnv(params);
 	}else {
 		res = executeBuiltIn(params);
 		if(res < 0){
@@ -109,7 +165,6 @@ int executeCmd(char **params, int argc){
 	}
 	return res;
 }
-
 
 
 

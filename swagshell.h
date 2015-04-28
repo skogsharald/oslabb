@@ -14,3 +14,5 @@ int parseCmd(char*, char **);
 int executeCmd(char **, int);
 
 int executeBuiltIn(char **);
+
+int checkEnv(char **);
