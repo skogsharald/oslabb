@@ -72,65 +72,76 @@ int checkEnv(char **params){
 
 
 	char *printenv[2];
-  	char *grep[2];
-  	char *pager[2];
-  	char **cmd[4];
-  	printenv[0] = "printenv";
-  	grep[0] = "sort";
-  	pager[0] = "less";
-  	cmd[0] = printenv;
-  	cmd[1] = grep;
-  	cmd[2] = pager;
-
-
-
-  
-  return loop_pipe(cmd);
+	char *grep[2];
+	char *pager[2];
+	char **cmd[4];
+	char* pager_env;
+	pager_env = getenv("PAGER");
+	printenv[0] = "printenv";
+	if(pager_env == NULL) {
+		pager[0] = "less";
+	} else {
+		pager[0] = pager_env;
+	}
+	grep[0] = "sort";
+	cmd[0] = printenv;
+	cmd[1] = grep;
+	cmd[2] = pager;
+	return loop_pipe(cmd);
 }
 
-int    loop_pipe(char ***cmd) {
+int loop_pipe(char ***cmd) {
 	int saved_in;
 	int saved_out;
 	int   p[2];
-  pid_t pid;
-  int   fd_in;
-  int pipe_res;
+	pid_t pid;
+	int   fd_in;
+	int pipe_res;
+	char *more[2];
 
-  fd_in = 0;
-  saved_in = dup(0);
-  saved_out = dup(1);
+	fd_in = 0;
+	more[0] = "more";
+	/* Save STDIN and STDOUT */
+	saved_in = dup(0);
+	saved_out = dup(1);
 
-  while (*cmd != NULL)
-    {
+	while (*cmd != NULL)
+	{
 
-      pipe_res = pipe(p);
-      if(pipe_res < 0)
-      	return EXIT_FAILURE;
-      if ((pid = fork()) == -1)
-        {
-          return EXIT_FAILURE;
-        }
-      else if (pid == 0) /* Child process */
-      {
-          dup2(fd_in, 0); /* First iteration, make sure we read from STDIN, otherwise read from whatever specified by fd_in */
-          if (*(cmd + 1) != NULL)
-            dup2(p[1], 1); /* If the next command in chain is not null, make sure we write to pipe write file descriptor */
-          close(p[0]); /* Close file descriptor for read end of pipe */
-          execvp((*cmd)[0], *cmd); /*Execute command*/
-          exit(EXIT_FAILURE); /* Fuck all */
-        }
-      else
-        {
-          wait(NULL); /* Wait for child process */
-          close(p[1]); /* Close the write end of pipe */
-          fd_in = p[0]; /* Set fd_in to read end of pipe, so we in next iteration read from this file descriptor*/
-          cmd++; /* Next command in chain */ 
-        }
-    }
-    dup2(saved_in, 0);
-    dup2(saved_out, 1);
-    return EXIT_SUCCESS;
-  }
+		pipe_res = pipe(p);
+		if(pipe_res < 0)
+			return EXIT_FAILURE;
+		if ((pid = fork()) == -1)
+		{
+			return EXIT_FAILURE;
+		}
+		else if (pid == 0) /* Child process */
+		{
+			dup2(fd_in, 0); /* First iteration, make sure we read from STDIN, otherwise read from whatever specified by fd_in */
+			if (*(cmd + 1) != NULL){
+				dup2(p[1], 1); /* If the next command in chain is not null, make sure we write to pipe write file descriptor */
+			}
+			close(p[0]); /* Close file descriptor for read end of pipe */
+			execvp((*cmd)[0], *cmd); /*Execute command*/
+			if(*(cmd + 1) == NULL) {
+				execvp(more[0], more);
+			}
+			exit(EXIT_FAILURE); /* Fuck all */
+		}
+		else
+		{
+			wait(NULL); /* Wait for child process */
+			close(p[1]); /* Close the write end of pipe */
+			fd_in = p[0]; /* Set fd_in to read end of pipe, so we in next iteration read from this file descriptor*/
+			cmd++; /* Next command in chain */
+
+		}
+	}
+	/* Restore STDIN and STDOUT to print */
+	dup2(saved_in, 0);
+	dup2(saved_out, 1);
+	return EXIT_SUCCESS;
+}
 
 
 /*
@@ -192,9 +203,9 @@ int    loop_pipe(char ***cmd) {
 
 
 
-int executeCmd(char **params, int argc){
-	int res;
-	char *msg;
+	int executeCmd(char **params, int argc){
+		int res;
+		char *msg;
 	/*
 	char cd_string [MAX_LENGTH] = COMMAND_CD;
 	char exit_string [MAX_LENGTH] = COMMAND_EXIT;
