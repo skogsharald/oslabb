@@ -129,7 +129,6 @@ int my_pipe(char ***cmd) {
 
 	while (*cmd != NULL)
 	{
-
 		pipe_res = pipe(p);
 		if(pipe_res < 0)
 			return EXIT_FAILURE;
@@ -170,69 +169,9 @@ int my_pipe(char ***cmd) {
 	return EXIT_SUCCESS;
 }
 
-
-/*
+int executeCmd(char **params, int argc){
 	int res;
-	int fds[2];
-	pipe(fds);
-
-	//res = execlp("printenv", "printenv", NULL);
-	
-	pipe(fds);
-	pid_t pid = fork();
-
-	if(pid==0){
-		printf("parent pid is: %i", pid);
-		close(fds[1]);
-		dup2(fds[0], STDIN_FILENO);
-		
-
-		wait(pid);
-		printf("WAIT COMPLETE");
-		pid_t pid2 = fork();
-		int fds2[2];
-
-		if(pid==0){
-			printf("parent pid is: %i", pid);
-			close(fds2[1]);
-			dup2(fds2[0], STDIN_FILENO);  
-		}else if(pid > 0){
-			close(fds2[0]);
-			printf("child2 pid is: %i", pid);
-			dup2(fds2[1], STDOUT_FILENO);
-			execlp("printenv", NULL);
-			close(fds2[1]);
-			
-		}else{
-			printf("didn't work... pid is: %i", pid);
-			execvp("sort", NULL);
-	}
-*/
-
-/*
-	}else if(pid > 0){
-		close(fds[0]);
-		printf("child pid is: %i", pid);
-		dup2(fds[1], STDOUT_FILENO);
-		execlp("printenv", NULL);
-		close(fds[1]);
-		
-
-	}else{
-		
-		printf("didn't work... pid is: %i", pid);
-		execvp("sort", NULL);
-		
-	}
-	*/
-
-
-
-
-
-	int executeCmd(char **params, int argc){
-		int res;
-		char *msg;
+	char *msg;
 	/*
 	char cd_string [MAX_LENGTH] = COMMAND_CD;
 	char exit_string [MAX_LENGTH] = COMMAND_EXIT;
