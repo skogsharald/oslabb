@@ -19,3 +19,5 @@ int executeBuiltIn(char **);
 int checkEnv(char **, int);
 
 int my_pipe(char ***);
+
+void intHandler();

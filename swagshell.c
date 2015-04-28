@@ -9,14 +9,20 @@ int main() {
 	char cmd [MAX_LENGTH];
 	char *params [MAX_PARAMETERS];
 	int argc;
+	signal(SIGINT, intHandler);
 	while(1) {
 		printf("swag > ");
-
 		if(fgets(cmd, sizeof(cmd), stdin) == NULL) break;
 		argc = parseCmd(cmd, params);
 		executeCmd(params, argc);
 	}
 	return EXIT_SUCCESS;
+}
+
+void intHandler(){
+	signal(SIGINT, intHandler);
+	printf("\nswag > ");
+	fflush(stdout);
 }
 
 /* Call built-in chdir subroutine */
