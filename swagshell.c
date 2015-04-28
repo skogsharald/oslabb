@@ -125,9 +125,13 @@ int my_pipe(char ***cmd) {
 			}
 			close(p[0]); /* Close file descriptor for read end of pipe */
 			execvp((*cmd)[0], *cmd); /*Execute command*/
-			if(*(cmd + 1) == NULL) {
-				/* If we end up here, it means less (or the pager set) has failed and thus we run more instead*/
-				execvp(more[0], more);
+			if(*(cmd + 1) == NULL ) {
+				if(strcmp((*cmd)[0], "less") == 0){
+					/* If we end up here, it means less has failed and thus we run more instead*/
+					execvp(more[0], more);
+				}
+				/* Here, the pager has failed */
+				perror("Could not use PAGER variable.");
 			}
 			exit(EXIT_FAILURE); /* Fuck all */
 		}
