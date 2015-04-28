@@ -68,14 +68,16 @@ int executeBuiltIn(char **params) {
 	return res;
 }
 
-int checkEnv(char **params){
+int checkEnv(char **params, int argc){
 
 
 	char *printenv[2];
-	char *grep[2];
+	char *grep[100];
+	char *sort[2];
 	char *pager[2];
-	char **cmd[4];
+	char **cmd[5];
 	char* pager_env;
+	int i;
 	pager_env = getenv("PAGER");
 	printenv[0] = "printenv";
 	if(pager_env == NULL) {
@@ -83,10 +85,23 @@ int checkEnv(char **params){
 	} else {
 		pager[0] = pager_env;
 	}
-	grep[0] = "sort";
+	sort[0] = "sort";
 	cmd[0] = printenv;
-	cmd[1] = grep;
-	cmd[2] = pager;
+	if(argc > 0){
+		grep[0] = "grep";
+		for(i = 1; i <= argc; i++ ){
+			grep[i] = params[i];
+		}
+		cmd[1] = grep;
+		cmd[2] = sort;
+		cmd[3] = pager;
+	} else {
+		
+		cmd[1] = sort;
+		cmd[2] = pager;
+	}
+	
+	
 	return my_pipe(cmd);
 }
 
@@ -235,7 +250,10 @@ int my_pipe(char ***cmd) {
 		printf("%s is EXIT\n", params[0]);
 		res =  EXIT_SUCCESS;
 	}else if(strcmp(params[0], COMMAND_CHECKENV)==0){
-		res = checkEnv(params);
+		res = checkEnv(params, (argc-1));
+		if(res < 1){
+			msg = "checkEnv failed";
+		}
 	}else {
 		res = executeBuiltIn(params);
 		if(res < 0){

@@ -16,6 +16,6 @@ int executeCmd(char **, int);
 
 int executeBuiltIn(char **);
 
-int checkEnv(char **);
+int checkEnv(char **, int);
 
 int my_pipe(char ***);
