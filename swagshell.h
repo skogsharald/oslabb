@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 
 /* Declaration of the changeDir function */
 int changeDir(char *);

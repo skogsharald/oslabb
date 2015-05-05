@@ -1,3 +1,5 @@
+#define _GNU_SOURCE /* Not good at all, but necessary because of reasons. */
+
 #include "swagshell.h"
 #define COMMAND_CD "cd"
 #define COMMAND_EXIT "exit"
@@ -11,8 +13,12 @@ int main() {
 	int argc;
 	signal(SIGINT, intHandler);
 	while(1) {
-		printf("swag > ");
-		if(fgets(cmd, sizeof(cmd), stdin) == NULL) break;
+		fprintf(stdout, "swag > ");
+		fflush(stdout);
+		if(fgets(cmd, sizeof(cmd), stdin) == NULL)
+		{
+			continue;
+		}
 		argc = parseCmd(cmd, params);
 		executeCmd(params, argc);
 	}
@@ -22,7 +28,7 @@ int main() {
 void intHandler(){
 	/*fprintf(stderr, "\nswag > ");*/
 	int e;
-	e = tcflush(STDIN_FILENO, TCIFLUSH);
+	e = tcflush(fileno(stdin), TCIFLUSH);
 	if(e < 0){
 		perror("Error flushing stdin");
 	}
@@ -69,10 +75,13 @@ int executeBuiltIn(char **params, int argc) {
 	pid_t pid;
 	int background;
 	int i;
+	struct timeval t1, t2;
+	double elapsedTimeMillis;
 	background = 0;
 	for(i = 0; i < argc; i++){
 		if(strcmp(params[i], "&") == 0){
 			background = 1;
+			params[i] = NULL;
 		}
 	}
 	pid = fork();
@@ -82,16 +91,19 @@ int executeBuiltIn(char **params, int argc) {
 	} else if(pid == 0) {
 		res = execvp(params[0], params);
 	} else {
-		if(background == 0)
+		if(background == 0){
+			gettimeofday(&t1, NULL);
 			wait(NULL);
+			gettimeofday(&t2, NULL);
+			elapsedTimeMillis = (t2.tv_sec - t1.tv_sec) * 1000.0;
+			fprintf(stdout, "Time taken %f ms\n", elapsedTimeMillis);
+		}
 		res = EXIT_SUCCESS;
 	}
 	return res;
 }
 
 int checkEnv(char **params, int argc){
-
-
 	char *printenv[2];
 	char *grep[10];
 	char *sort[2];
@@ -126,8 +138,6 @@ int checkEnv(char **params, int argc){
 		cmd[3] = NULL;
 	}
 	cmd[4] = NULL;
-	
-	
 	return my_pipe(cmd);
 }
 
@@ -212,8 +222,11 @@ int executeCmd(char **params, int argc){
 			msg = "Error";
 		}
 	}else if(strcmp(params[0], COMMAND_EXIT)==0){
-		printf("%s is EXIT\n", params[0]);
-		res =  EXIT_SUCCESS;
+		res = kill((pid_t) 0, SIGTERM);
+		if(res > -1)
+			exit(EXIT_SUCCESS);
+		else
+			msg = "Could not Terminate";
 	}else if(strcmp(params[0], COMMAND_CHECKENV)==0){
 		res = checkEnv(params, (argc-1));
 		if(res < 1){
