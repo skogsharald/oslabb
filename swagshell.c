@@ -6,13 +6,27 @@
 #define COMMAND_CHECKENV "checkEnv"
 #define MAX_LENGTH 80
 #define MAX_PARAMETERS 10 /* More parameters than 10 will overwrite memory */
+
 int main() {
 
 	char cmd [MAX_LENGTH];
 	char *params [MAX_PARAMETERS];
 	int argc;
+	#if SIGDET > 0
+		/* Gör skit */
+	#else
+		pid_t child_pid;
+	#endif
 	signal(SIGINT, intHandler);
 	while(1) {
+		#if SIGDET > 0
+			/* Gör skit */
+		#else
+			/* Poll and see if any child processes have been terminated */
+			while ((child_pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+				printf("%d terminated\n", child_pid);
+		    }
+		#endif
 		fprintf(stdout, "swag > ");
 		fflush(stdout);
 		if(fgets(cmd, sizeof(cmd), stdin) == NULL)
@@ -75,6 +89,7 @@ int executeBuiltIn(char **params, int argc) {
 	pid_t pid;
 	int background;
 	int i;
+	int start_sec, end_sec, start_usec, end_usec;
 	struct timeval t1, t2;
 	double elapsedTimeMillis;
 	background = 0;
@@ -92,10 +107,16 @@ int executeBuiltIn(char **params, int argc) {
 		res = execvp(params[0], params);
 	} else {
 		if(background == 0){
+			/* Measure time if */
 			gettimeofday(&t1, NULL);
 			wait(NULL);
 			gettimeofday(&t2, NULL);
-			elapsedTimeMillis = (t2.tv_sec - t1.tv_sec) * 1000.0;
+			start_sec = t1.tv_sec;
+			end_sec = t2.tv_sec;
+			start_usec = t1.tv_usec;
+			end_usec = t2.tv_usec;
+
+			elapsedTimeMillis = (end_sec * 1000.0 + end_usec / 1000.0) - (start_sec * 1000.0 + start_usec / 1000.0);
 			fprintf(stdout, "Time taken %f ms\n", elapsedTimeMillis);
 		}
 		res = EXIT_SUCCESS;
@@ -222,7 +243,7 @@ int executeCmd(char **params, int argc){
 			msg = "Error";
 		}
 	}else if(strcmp(params[0], COMMAND_EXIT)==0){
-		res = kill((pid_t) 0, SIGTERM);
+		res = kill((pid_t) 0, SIGTERM); /* Send SIGTERM to all processes this process has started*/
 		if(res > -1)
 			exit(EXIT_SUCCESS);
 		else
