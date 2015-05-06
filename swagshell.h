@@ -23,3 +23,5 @@ int checkEnv(char **, int);
 int my_pipe(char ***);
 
 void intHandler();
+
+void handle_sigchld(int, siginfo_t *, void *);

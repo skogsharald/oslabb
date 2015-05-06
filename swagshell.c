@@ -13,15 +13,25 @@ int main() {
 	char *params [MAX_PARAMETERS];
 	int argc;
 	#if SIGDET > 0
-		/* Gör skit */
+		struct sigaction sa;
+		printf("*** Running with SIGDET. ***\n");
 	#else
 		pid_t child_pid;
+		printf("*** Running with polling. ***\n");
 	#endif
 	signal(SIGINT, intHandler);
 	while(1) {
 		#if SIGDET > 0
-			/* Gör skit */
+			
+			sa.sa_sigaction = &handle_sigchld;
+			sigemptyset(&sa.sa_mask);
+			sa.sa_flags = SA_SIGINFO | SA_NOCLDSTOP;
+			if (sigaction(SIGCHLD, &sa, 0) < 0) {
+				perror(0);
+				exit(-1); /* Something has seriously gone wrong. Exit. */
+			}
 		#else
+			
 			/* Poll and see if any child processes have been terminated */
 			while ((child_pid = waitpid(-1, NULL, WNOHANG)) > 0) {
 				printf("%d terminated\n", child_pid);
@@ -49,6 +59,12 @@ void intHandler(){
 	fprintf(stdout, "\n");
 	fprintf(stdout, "swag > ");
 	fflush(stdout);
+}
+
+void handle_sigchld(int signal, siginfo_t *info, void *swagpointer){
+	while (waitpid(info->si_pid, 0, WNOHANG) > 0) {
+		printf("%d terminated\n", info->si_pid);
+	}
 }
 
 /* Call built-in chdir subroutine */
