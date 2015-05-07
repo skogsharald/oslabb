@@ -10,18 +10,18 @@
 #include <sys/time.h>
 
 /* Declaration of the changeDir function */
-int changeDir(char *);
+void changeDir(char *);
 
 int parseCmd(char*, char **);
 
-int executeCmd(char **, int);
+void executeCmd(char **, int);
 
-int executeBuiltIn(char **, int);
+void executeBuiltIn(char **, int);
 
-int checkEnv(char **, int);
+void checkEnv(char **, int);
 
-int my_pipe(char ***);
+void my_pipe(char ***);
 
-void intHandler();
+void handle_sigterm();
 
 void handle_sigchld(int, siginfo_t *, void *);
