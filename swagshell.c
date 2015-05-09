@@ -157,23 +157,34 @@ void executeBuiltIn(char **params, int argc) {
 	struct timeval t1, t2;
 	double elapsedTimeMillis;
 	background = 0;
+	/* Check if process should be foreground or background */
 	for(i = 0; i < argc; i++){
 		if(strcmp(params[i], "&") == 0){
 			background = 1;
 			params[i] = NULL;
 		}
 	}
+	/* 
+		Fork off for new process, otherwise process would overtake 
+		shell's process structure and return to bash after termination 
+	*/
 	pid = fork();
 	if(pid < 0){
 		perror("Fork failed");
 	} else if(pid == 0) {
+		/* Execute the command in child process */
 		res = execvp(params[0], params);
 		if(res < 0) {
 			perror("Unknown command");
 		}
 	} else {
+		/* 
+			Main thread;
+			If process is run in foreground, measure the time it is running and print
+			upon termination.
+			If process is run in background, we do not wait for it.
+		*/
 		if(background == 0){
-			/* Measure time if */
 			gettimeofday(&t1, NULL);
 			wait(NULL);
 			gettimeofday(&t2, NULL);
@@ -182,11 +193,12 @@ void executeBuiltIn(char **params, int argc) {
 			start_usec = t1.tv_usec;
 			end_usec = t2.tv_usec;
 			elapsedTimeMillis = (end_sec * 1000.0 + end_usec / 1000.0) - (start_sec * 1000.0 + start_usec / 1000.0);
-			fprintf(stdout, "Time taken %f ms\n", elapsedTimeMillis);
+			fprintf(stdout, "Process Terminated. Time taken %f ms\n", elapsedTimeMillis);
 		}
 	}
 }
 
+/* The checkEnv command. Takes parameters to grep on in printenv result */
 void checkEnv(char **params, int argc){
 	char *printenv[2];
 	char *grep[10];
@@ -195,6 +207,7 @@ void checkEnv(char **params, int argc){
 	char **cmd[5];
 	char* pager_env;
 	int i;
+	/* Retrieve PAGER environment variable, use less if there is no pager set */
 	pager_env = getenv("PAGER");
 	printenv[0] = "printenv";
 	if(pager_env == NULL) {
@@ -202,11 +215,14 @@ void checkEnv(char **params, int argc){
 	} else {
 		pager[0] = pager_env;
 	}
+	/* Initialize pipe chain */
 	pager[1] = NULL;
 	sort[0] = "sort";
 	sort[1] = NULL;
 	cmd[0] = printenv;
+	/* If argc > 0, then there is an argument to grep on*/
 	if(argc > 0){
+		/* Retrieve arguments to grep on */
 		grep[0] = "grep";
 		for(i = 1; i <= argc; i++ ){
 			grep[i] = params[i];
@@ -216,21 +232,27 @@ void checkEnv(char **params, int argc){
 		cmd[2] = sort;
 		cmd[3] = pager;
 	} else {
-		
+		/* Otherwise, we just want to sort the output from printenv and pipe to pager */
 		cmd[1] = sort;
 		cmd[2] = pager;
 		cmd[3] = NULL;
 	}
 	cmd[4] = NULL;
-	my_pipe(cmd);
+	/* Send on to the pipe function itself */
+	the_pipe(cmd);
 }
 
-void my_pipe(char ***cmd) {
+/* Helper function to execute the entire chain in parameter cmd in pipes */
+void the_pipe(char ***cmd) {
 	int saved_in;
 	int saved_out;
-	int   p[2];
+	/* This int-array with two positions will be the pipe itself. First position is read, the other is write. */
+	int   p[2]; 
 	pid_t pid;
 	int   fd_in;
+	int dup2_res;
+	int exec_res;
+	int close_res;
 	int pipe_res;
 	char *more[2];
 
@@ -242,47 +264,87 @@ void my_pipe(char ***cmd) {
 	saved_in = dup(0);
 	saved_out = dup(1);
 
+	/* If the save failed */
+	if(saved_in < 0 || saved_out < 0) {
+		perror("Error savid STDIN or STDOUT");
+		return;
+	}
+
+	/* Iterate over cmd and execute each command in chain */
 	while (*cmd != NULL)
-	{
+	{	
+		/* Create a pipe off of p */
 		pipe_res = pipe(p);
-		if(pipe_res < 0)
+		if(pipe_res < 0){
 			perror("Pipe failed");
 			return;
-		if ((pid = fork()) == -1)
+		}
+		if ((pid = fork()) == -1) /* Fork into new child process to avoid shell terminating when checkEnv does */
 		{
 			perror("Fork failed");
 			return;
 		}
 		else if (pid == 0) /* Child process */
 		{
-			dup2(fd_in, 0); /* First iteration, make sure we read from STDIN, otherwise read from whatever specified by fd_in */
-			if (*(cmd + 1) != NULL){
-				dup2(p[1], 1); /* If the next command in chain is not null, make sure we write to pipe write file descriptor */
+			dup2_res = dup2(fd_in, 0); /* First iteration, make sure we read from STDIN, otherwise read from whatever specified by fd_in */
+			if(dup2_res < 0){
+				perror("Duplication of file descriptors failed.");
+				return;
 			}
-			close(p[0]); /* Close file descriptor for read end of pipe */
-			execvp((*cmd)[0], *cmd); /*Execute command*/
+			if (*(cmd + 1) != NULL){
+				dup2_res = dup2(p[1], 1); /* If the next command in chain is not null, make sure we write to pipe write file descriptor */
+				if(dup2_res < 0){
+					perror("Duplication of file descriptors failed.");
+					return;
+				}
+			}
+			close_res = close(p[0]); /* Close file descriptor for read end of pipe */
+			if(close_res < 0){
+				perror("Could not close file descriptor.");
+				return;
+			}
+			exec_res = execvp((*cmd)[0], *cmd); /*Execute command*/
+			if(exec_res < 0) {
+				perror("Could not execute command.");
+				return;
+			}
 			if(*(cmd + 1) == NULL ) {
 				if(strcmp((*cmd)[0], "less") == 0){
 					/* If we end up here, it means less has failed and thus we run more instead*/
-					execvp(more[0], more);
+					exec_res = execvp(more[0], more);
+					if(exec_res < 0) {
+						perror("Could not execute command.");
+						return;
+					}
 				}
 				/* Here, the pager has failed */
-				perror("Could not use PAGER variable.");
+				perror("Could not use pager stored in PAGER.");
 			}
-			exit(EXIT_FAILURE); /* Fuck all */
 		}
 		else
 		{
 			wait(NULL); /* Wait for child process */
-			close(p[1]); /* Close the write end of pipe */
+			close_res = close(p[1]); /* Close the write end of pipe */
+			if(close_res < 0){
+				perror("Could not close file descriptor.");
+				return;
+			}
 			fd_in = p[0]; /* Set fd_in to read end of pipe, so we in next iteration read from this file descriptor*/
 			cmd++; /* Next command in chain */
 
 		}
 	}
-	/* Restore STDIN and STDOUT to print */
-	dup2(saved_in, 0);
-	dup2(saved_out, 1);
+	/* Restore STDIN and STDOUT to print result from chain */
+	dup2_res = dup2(saved_in, 0);
+	if(dup2_res < 0){
+		perror("Duplication of file descriptors failed.");
+		return;
+	}
+	dup2_res = dup2(saved_out, 1);
+	if(dup2_res < 0){
+		perror("Duplication of file descriptors failed.");
+		return;
+	}
 }
 
 /* Executes what is saved in params */
@@ -310,8 +372,10 @@ void executeCmd(char **params, int argc){
 		else /* Otherwise, error */
 			perror("Could not terminate");
 	}else if(strcmp(params[0], COMMAND_CHECKENV)==0){
+		/* Perform checkEnv */
 		checkEnv(params, (argc-1));
 	}else {
+		/* Otherwise, try to see if the command is built in */
 		executeBuiltIn(params, argc);
 	}
 }

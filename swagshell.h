@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 
-/* Declaration of the changeDir function */
+/* Declarations of functions for swagshell */
 void changeDir(char *);
 
 int parseCmd(char*, char **);
@@ -20,7 +20,7 @@ void executeBuiltIn(char **, int);
 
 void checkEnv(char **, int);
 
-void my_pipe(char ***);
+void the_pipe(char ***);
 
 void handle_sigterm();
 
