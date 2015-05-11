@@ -176,7 +176,11 @@ void executeBuiltIn(char **params, int argc) {
 	if(pid < 0){
 		perror("Fork failed");
 	} else if(pid == 0) {
-		/* Execute the command in child process, ignore sigint if in background */
+		/* 
+			Execute the command in child process, 
+			ignore SIGINT if child should be in background.
+			This way, ctrl+c won't interrupt the process.
+		*/
 		if(background)
 			signal(SIGINT, SIG_IGN);
 		res = execvp(params[0], params);
