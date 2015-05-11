@@ -1,4 +1,4 @@
-#define _GNU_SOURCE /* Not good at all, but necessary because of reasons. */
+#define _GNU_SOURCE /* Not good at all, but for STDIN to be flushed in sigterm handler */
 
 #include "swagshell.h"
 #define COMMAND_CD "cd"
@@ -6,7 +6,7 @@
 #define COMMAND_CHECKENV "checkEnv"
 #define MAX_LENGTH 80 /* As specified by instructions */
 #define MAX_PARAMETERS 50 
-/* Even if every command and parameter was 1 character long, 
+/* Even if every command and parameter were 1 character long, 
 the number of parameters would never exceed this as max length of input buffer*/
 
 int main() {
@@ -111,18 +111,21 @@ void changeDir(char *dir) {
 	status_dir = getcwd(cwd, sizeof(cwd));
 	if(status_dir == NULL) {
 		perror("Error retrieving cwd.");
+		return;
 	}
 	printf("Changing from cwd: %s\n", &cwd[0]);
 	/* Change directory */
 	status = chdir(dir);
 	if(status < 0) {
 		perror("Error changing directory.");
+		return;
 	}
 	/* Get new current working directory and print to user */
 	status_dir = getcwd(cwd, sizeof(cwd));
 	printf("Current working directory: %s\n", &cwd[0]);
 	if(status_dir == NULL) {
 		perror("Error retrieving cwd.");
+		return;
 	}
 }
 
@@ -142,6 +145,7 @@ int parseCmd(char *cmd, char **params) {
 		i++;
 		comm = strtok(NULL, " \n");
 	}
+	/* Seting the position after the last argument in the params array to null is necessary for execvp later */
 	params[i] = NULL;
 	/* Return argc */
 	return i;
@@ -367,10 +371,8 @@ void executeCmd(char **params, int argc){
 	}else if(strcmp(params[0], COMMAND_EXIT)==0){
 		res = kill((pid_t) 0, SIGTERM); /* Send SIGTERM to all processes this process has started */
 		/* If kill succeeded, we exit the shell */
-		if(res > -1)
-			exit(EXIT_SUCCESS);
-		else /* Otherwise, error */
-			perror("Could not terminate");
+		if(res < 0) /* Otherwise, error */
+			perror("Could not terminate.");
 	}else if(strcmp(params[0], COMMAND_CHECKENV)==0){
 		/* Perform checkEnv */
 		checkEnv(params, (argc-1));
