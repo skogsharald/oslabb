@@ -176,7 +176,9 @@ void executeBuiltIn(char **params, int argc) {
 	if(pid < 0){
 		perror("Fork failed");
 	} else if(pid == 0) {
-		/* Execute the command in child process */
+		/* Execute the command in child process, ignore sigint if in background */
+		if(background)
+			signal(SIGINT, SIG_IGN);
 		res = execvp(params[0], params);
 		if(res < 0) {
 			perror("Unknown command");
