@@ -25,3 +25,5 @@ void the_pipe(char ***);
 void handle_sigterm();
 
 void handle_sigchld(int, siginfo_t *, void *);
+
+void handle_zombie_sigchld(int);

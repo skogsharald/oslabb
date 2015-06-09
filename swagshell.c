@@ -102,6 +102,24 @@ void handle_sigchld(int signal, siginfo_t *info, void *swagpointer){
 	}
 }
 
+void handle_zombie_sigchld(int pid) {
+	int sig;
+	int temp_pid;
+	while(1){
+		temp_pid = waitpid(-1, &sig, 0);
+		if(temp_pid == -1){
+			/* No more zombie processes */
+			return;
+		}
+		if(temp_pid != pid) {
+			if(WIFEXITED(sig) || WIFSIGNALED(sig)) {
+			/* This process has exited, but signal was blocked */
+			printf("%d terminated\n", temp_pid);
+			}
+		}
+	}
+}
+
 /* Call built-in chdir subroutine to change the directory*/
 void changeDir(char *dir) {
 	char cwd[1024];
@@ -161,6 +179,9 @@ void executeBuiltIn(char **params, int argc) {
 	int start_sec, end_sec, start_usec, end_usec;
 	struct timeval t1, t2;
 	double elapsedTimeMillis;
+	#if SIGDET > 0
+	sigset_t sigchld_mask;
+	#endif
 	background = 0;
 	/* Check if process should be foreground or background */
 	for(i = 0; i < argc; i++){
@@ -189,6 +210,7 @@ void executeBuiltIn(char **params, int argc) {
 			perror("Unknown command");
 		}
 	} else {
+		
 		/* 
 			Main thread;
 			If process is run in foreground, measure the time it is running and print
@@ -196,6 +218,12 @@ void executeBuiltIn(char **params, int argc) {
 			If process is run in background, we do not wait for it.
 		*/
 		if(background == 0){
+			/* If we use interrupts, disable them temporarily */
+			#if SIGDET > 0
+			sigemptyset(&sigchld_mask);
+			sigaddset(&sigchld_mask, SIGCHLD);
+			sigprocmask(SIG_BLOCK, &sigchld_mask, NULL);
+			#endif
 			gettimeofday(&t1, NULL);
 			waitpid(pid, &status, 0);
 			gettimeofday(&t2, NULL);
@@ -204,8 +232,12 @@ void executeBuiltIn(char **params, int argc) {
 			start_usec = t1.tv_usec;
 			end_usec = t2.tv_usec;
 			elapsedTimeMillis = (end_sec * 1000.0 + end_usec / 1000.0) - (start_sec * 1000.0 + start_usec / 1000.0);
-			fprintf(stdout, "Process Terminated. Time taken %f ms\n", elapsedTimeMillis);
-		}
+			fprintf(stdout, "Process %d Terminated. Time taken %f ms\n",pid, elapsedTimeMillis);
+			#if SIGDET > 0
+			sigprocmask(SIG_UNBLOCK, &sigchld_mask, NULL);
+			handle_zombie_sigchld(pid); /* Catch any zombies whose signal was blocked.*/
+			#endif
+		}	
 	}
 }
 
