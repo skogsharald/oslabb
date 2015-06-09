@@ -102,10 +102,12 @@ void handle_sigchld(int signal, siginfo_t *info, void *swagpointer){
 	}
 }
 
+/* This is only done when a foreground process is done and we are using SIGDET */
 void handle_zombie_sigchld(int pid) {
 	int sig;
 	int temp_pid;
 	while(1){
+		/* Loop through child processes */
 		temp_pid = waitpid(-1, &sig, 0);
 		if(temp_pid == -1){
 			/* No more zombie processes */
@@ -218,7 +220,7 @@ void executeBuiltIn(char **params, int argc) {
 			If process is run in background, we do not wait for it.
 		*/
 		if(background == 0){
-			/* If we use interrupts, disable them temporarily */
+			/* If we use SIGDET, disable SIGCHLD temporarily */
 			#if SIGDET > 0
 			sigemptyset(&sigchld_mask);
 			sigaddset(&sigchld_mask, SIGCHLD);
@@ -235,7 +237,7 @@ void executeBuiltIn(char **params, int argc) {
 			fprintf(stdout, "Process %d Terminated. Time taken %f ms\n",pid, elapsedTimeMillis);
 			#if SIGDET > 0
 			sigprocmask(SIG_UNBLOCK, &sigchld_mask, NULL);
-			handle_zombie_sigchld(pid); /* Catch any zombies whose signal was blocked.*/
+			handle_zombie_sigchld(pid); /* Reap blocked signals! */
 			#endif
 		}	
 	}
