@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
+#include <sys/time.h>
 
 /* Declarations of functions for swagshell */
 void changeDir(char *);

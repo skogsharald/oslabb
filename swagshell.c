@@ -157,11 +157,10 @@ void executeBuiltIn(char **params, int argc) {
 	pid_t pid;
 	int background;
 	int i;
-	/*int start_sec, end_sec, start_usec, end_usec;
+	int status;
+	int start_sec, end_sec, start_usec, end_usec;
 	struct timeval t1, t2;
-	double elapsedTimeMillis;*/
-	clock_t begin, end;
-	/*double time_spent;*/
+	double elapsedTimeMillis;
 	background = 0;
 	/* Check if process should be foreground or background */
 	for(i = 0; i < argc; i++){
@@ -197,17 +196,15 @@ void executeBuiltIn(char **params, int argc) {
 			If process is run in background, we do not wait for it.
 		*/
 		if(background == 0){
-			/*gettimeofday(&t1, NULL);*/
-			begin = clock();
-			wait(NULL);
-			end = clock()-begin;
-			/*gettimeofday(&t2, NULL);
+			gettimeofday(&t1, NULL);
+			waitpid(pid, &status, 0);
+			gettimeofday(&t2, NULL);
 			start_sec = t1.tv_sec;
 			end_sec = t2.tv_sec;
 			start_usec = t1.tv_usec;
 			end_usec = t2.tv_usec;
-			elapsedTimeMillis = (end_sec * 1000.0 + end_usec / 1000.0) - (start_sec * 1000.0 + start_usec / 1000.0);*/
-			fprintf(stdout, "Process Terminated. Time taken %f ms\n", ((double)end)/CLOCKS_PER_SEC);
+			elapsedTimeMillis = (end_sec * 1000.0 + end_usec / 1000.0) - (start_sec * 1000.0 + start_usec / 1000.0);
+			fprintf(stdout, "Process Terminated. Time taken %f ms\n", elapsedTimeMillis);
 		}
 	}
 }
